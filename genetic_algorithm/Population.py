@@ -1,14 +1,15 @@
 import random
 from typing import List, Tuple
 
-from Individual import Individual
+from dataset import Dataset
+from individual import Individual
 
 
 class Population:
-    def __init__(self, target, mutation_rate):
+    def __init__(self, dataset: Dataset, mutation_rate, stagnation_limit=1000, cv=10):
+        self.dataset = dataset
         self.population: List[Individual] = []
         self.generations = 0
-        self.target = target
         self.mutation_rate = mutation_rate
         self.best_individual = None
         self.finished = False
@@ -16,11 +17,14 @@ class Population:
         self.max_fitness = 0
         self.average_fitness = 0
         self.mating_pool = []
+        self.stagnation_limit = stagnation_limit
+        self.generations_without_improvement = 0
+        self.cv = cv
 
-    def create_initial_population(self, size):
-        for i in range(size):
-            ind = Individual(len(self.target))
-            ind.calculate_fitness(self.target)
+    def create_initial_population(self, pop_size):
+        for _ in range(pop_size):
+            ind = Individual(self.dataset, self.cv)
+            ind.calculate_fitness()
 
             if ind.fitness > self.max_fitness:
                 self.max_fitness = ind.fitness
@@ -48,7 +52,7 @@ class Population:
 
             offspring = partner_a.crossover(partner_b)
             offspring.mutate(self.mutation_rate)
-            offspring.calculate_fitness(self.target)
+            offspring.calculate_fitness()
 
             self.average_fitness += offspring.fitness
             new_population.append(offspring)
@@ -70,17 +74,31 @@ class Population:
 
     def evaluate(self):
         best_fitness = 0
+        best_individual = None
 
         for ind in self.population:
             if ind.fitness > best_fitness:
                 best_fitness = ind.fitness
-                self.best_individual = ind
-                self.max_fitness = best_fitness
+                best_individual = ind
 
-        if best_fitness >= self.perfect_score:
+        if best_fitness > self.max_fitness:
+            self.max_fitness = best_fitness
+            self.best_individual = best_individual
+            self.generations_without_improvement = 0
+        else:
+            self.generations_without_improvement += 1
+
+        if self.max_fitness >= self.perfect_score:
             self.finished = True
 
     def print_population_status(self):
         print("\nGeneration: " + str(self.generations))
         print("Average fitness: " + str(self.average_fitness))
         print("Max fitness: " + str(self.max_fitness))
+
+        if self.generations_without_improvement >= self.stagnation_limit:
+            print("Stagnation limit reached")
+            self.finished = True
+        elif self.max_fitness >= self.perfect_score:
+            print("Perfect score reached")
+            self.finished = True
