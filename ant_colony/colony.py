@@ -5,7 +5,8 @@ from typing import List
 from ant import Ant
 
 # Limit the printable characters to the lowercase alphabet
-string.printable = "abcdefghijklmnopqrstuvwxyz"
+# string.printable = "abcdefghijklmnopqrstuvwxyz"
+char_to_int = {char: i for i, char in enumerate(string.printable)}
 
 
 class Colony:
@@ -145,6 +146,19 @@ class Colony:
             for j in range(len(string.printable)):
                 self.probabilities[i][j] = self.pheromones[i][j] ** self.alpha / total
 
+        self.probabilities = self._initialize_matrix(self.size, 0)
+        for i in range(self.size):
+            for j in range(len(string.printable)):
+                self.probabilities[i][j] = (
+                    self.pheromones[i][j] ** self.alpha
+                    * self._heuristic(i, j) ** self.beta
+                )
+
+        for i in range(self.size):
+            total = sum(self.probabilities[i])
+            for j in range(len(string.printable)):
+                self.probabilities[i][j] /= total
+
     def _choose_next_node(self, i):
         """
         Choose the next character in the ant's path based on the probabilities.
@@ -192,6 +206,18 @@ class Colony:
             self.stagnation_count += 1
             if self.stagnation_count >= self.max_stagnation:
                 self.finished = True
+
+    def _heuristic(self, current_node: int, next_node: int) -> int:
+        """
+        Calculate the heuristic value for the given character.
+
+        The heuristic value is calculated by taking the absolute
+        value of the difference between the current character and
+        the target character.
+        """
+        if self.target[current_node] == string.printable[next_node]:
+            return 1
+        return 1 / abs(next_node - char_to_int[self.target[current_node]])
 
     def print_status(self):
         print("\nGeneration: " + str(self.generations))

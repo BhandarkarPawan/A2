@@ -3,7 +3,7 @@ import string
 from typing import List
 
 # Limit the printable characters to the lowercase alphabet
-string.printable = "abcdefghijklmnopqrstuvwxyz"
+# string.printable = "abcdefghijklmnopqrstuvwxyz"
 
 
 class Ant:
@@ -49,9 +49,8 @@ class Ant:
         return d[len(s)][len(t)]
 
     def get_fitness(self, target: str) -> int:
-        return self._levenshtein_distance(
-            "".join(string.printable[node] for node in self.path), target
-        )
+        path_string = "".join(string.printable[node] for node in self.path)
+        return self._levenshtein_distance(path_string, target)
 
     def __repr__(self):
         return "".join(string.printable[node] for node in self.path)

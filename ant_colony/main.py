@@ -9,7 +9,7 @@ def ant_colony_algorithm():
     beta = 1
     max_stagnation = 1000
 
-    target = "helloworld"
+    target = "To be or not to be"
     colony = Colony(
         target=target,
         num_ants=num_ants,
